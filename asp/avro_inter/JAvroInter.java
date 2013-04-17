@@ -181,7 +181,6 @@ public class JAvroInter{
         Schema schema = (new Schema.Parser()).parse(s);
         this.schema = schema;
 
-
          BufferedReader buffer = new BufferedReader(new FileReader(filename));
          String line = null;
          int count = 1;
@@ -257,9 +256,7 @@ public class JAvroInter{
 
     dataFileWriter.close();
 
-}
-
-                       
+}                      
                                 
 	public void readAvroFile() throws IOException, ClassNotFoundException, IllegalAccessException,InstantiationException{
 		File file = new File(INPUT_FILE_NAME);

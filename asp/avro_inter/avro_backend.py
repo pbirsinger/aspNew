@@ -21,6 +21,7 @@ def generate_scala_object(mainfunc, filename=None, rendered=None):
 import javro.JAvroInter
 import org.apache.avro.Schema
 import javro.scala_arr
+import javro.scala_lib 
 
 class %s{
     %s
@@ -35,13 +36,9 @@ object %s{
     output += """
 }
 """
-    #print 'output is ', output
     return output
 
-
-#multiple outputs????
 def generate_scala_main(rendered, mainfunc):
-    
     main = """
     def main(args: Array[String]){  
         var s = new JAvroInter("results.avro", "args.avro") 
@@ -80,8 +77,6 @@ def get_arg_type(rendered, mainfunc):
         args_found += 1
     types = parse_func(rendered, colon_indices, mainfunc)  
     return types  
-    #return "Int"
-
 
 def parse_func(rendered, colon_indices, mainfunc):
     comma_indices = []
@@ -100,8 +95,7 @@ def parse_func(rendered, colon_indices, mainfunc):
     #arg types are now between : and ,'s
     return types
 
-#calculates arg amount in function simply by counting the commas...could be more rigorous, but
-#can't think of a situation in which it won't work
+#calculates arg amount in function simply by counting the commas...could be improved
 def get_arg_amount(rendered, mainfunc):
     start = opening_paren_loc(rendered,rendered.find(mainfunc))
     end = closing_paren_loc(rendered,rendered.find(mainfunc))    
@@ -125,7 +119,7 @@ def opening_paren_loc(str, start_index):
 
 #returns the index of the closin paren
 #first_paren is the index ideally of the opening paren, but still works if index is 
-# before the first paren (of course assuming there aren't other parens in between
+# before the first paren (assuming there aren't other parens in between)
 
 def closing_paren_loc(str, first_paren):
     paren_count = -1

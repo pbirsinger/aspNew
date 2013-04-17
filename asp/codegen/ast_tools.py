@@ -265,7 +265,6 @@ class ConvertPyAST_ScalaAST(ast.NodeTransformer):
                             [self.visit(x) for x in node.body])
         
     def visit_Call(self,node):
-
         args = []
         for a in node.args:
             args.append(self.visit(a))
@@ -306,7 +305,6 @@ class ConvertPyAST_ScalaAST(ast.NodeTransformer):
     def visit_If(self,node, inner_if = False):  
         test = self.visit(node.test)
         body = [self.visit(x) for x in node.body]
-        
         if node.orelse == []:
             orelse = None
         else:
@@ -335,7 +333,7 @@ class ConvertPyAST_ScalaAST(ast.NodeTransformer):
         for e in node.elts:
             elements.append(self.visit(e))
         return scala.List(elements)
-    
+  
     def visit_Tuple(self,node):        
         if node.elts:
             first = node.elts[0]
@@ -348,21 +346,26 @@ class ConvertPyAST_ScalaAST(ast.NodeTransformer):
                 return scala.List(elements)
         else:
             return scala.List([])
-            
-    """"
-    only for loops of type below work:
-        for item in list:
-    cannot use ranges yet..        
-    """        
+                
     def visit_For(self,node):
         body = [self.visit(x) for x in node.body]
         return scala.For(self.visit(node.target), self.visit(node.iter), body)
-    
+
+    def visit_ListComp(self,node):
+        #only supports single generator (for loop in list_comp)
+        comprehension = self.visit(node.generators[0])
+        return scala.ListComp(self.visit(node.elt), comprehension)
+
+    def visit_comprehension(self,node):
+        #ifs not supported yet
+        return scala.Comprehension(self.visit(node.target), self.visit(node.iter), [self.visit(if_stmt) for if_stmt in node.ifs])
+
     def visit_While(self,node):
         newbody = []
         for stmt in node.body:
             newbody.append(self.visit(stmt))
         return scala.While(self.visit(node.test), newbody)
+
 
     def visit_Expr(self,node):
         return self.visit(node.value)

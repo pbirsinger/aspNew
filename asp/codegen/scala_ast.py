@@ -5,6 +5,7 @@ I don't use the Generable class inheritance
 """
 
 class Generable():
+
 	pass
 
 class func_types(Generable):	
@@ -81,15 +82,18 @@ class Arguments(Generable):
 	def __init__(self, args):
 		self.args = args
 		self._fields = []
+		self.done = False
+
 		
 class FunctionDeclaration(Generable):
 	def __init__(self, name, args):
 		self.name = name
 		self.args = args
+		self.done = False
+
 
 class Expression(Generable):
 	def __init__(self):
-		# ???
 		super(Expression, self)
 		self._fields = []
 		self.done= False
@@ -125,12 +129,14 @@ class Attribute(Expression):
 	def __init__(self, value, attr):	
 		self.attr = attr
 		self.value = value
+		self.done = False
 		
 class List(Expression):
 	def __init__(self, elements):
 		self.elements = elements
 		self._fields = []
-		
+		self.done = False
+
 class BinOp(Expression):
 	def __init__(self, left, op, right):
 		self. left = left
@@ -161,12 +167,14 @@ class UnaryOp(Expression):
 		self.op = op
 		self.operand = operand
 		self._fields = ['operand']	
+		self.done = False
 
 class Subscript(Expression):
 	def __init__(self, value, index, context):
 		self.value = value
 		self.index = index
 		self.context = context
+		self.done =False
 		self._fields = ['value', 'index', 'context']
 
 class Print(Generable):
@@ -291,6 +299,41 @@ class For(Generable):
 		else:
 			self.done = True
 			return self
+
+class ListComp(Generable):
+	def __init__(self, elt, comprehension):
+		self.elt = elt
+		self.comprehension = comprehension
+		self.done = False
+		self._fields = ['elt', 'comprehension']
+
+	def __iter__(self):
+		return self
+
+	def next(self):
+		if self.done:
+			raise StopIteration
+		else:
+			self.done = True
+			return self	
+
+class Comprehension(Generable):
+	def __init__(self, target, iter, ifs):
+		self.target = target
+		self.iter = iter
+		self.ifs = ifs
+		self.done = False
+		self._fields = ['target', 'iter', 'ifs']
+
+	def __iter__(self):
+		return self
+
+	def next(self):
+		if self.done:
+			raise StopIteration
+		else:
+			self.done = True
+			return self		
 
 class While(Generable):
 	def __init__(self, test, body):

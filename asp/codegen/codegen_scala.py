@@ -115,14 +115,15 @@ class SourceGenerator(NodeVisitor):
             if self.result:
                 self.result.append('\n' * self.new_lines)
             self.result.append(self.indent_with * self.indentation)
+
             self.new_lines = 0
         self.result.append(x)
         
     def newline(self, node=None, extra=0):
-        if isinstance(node, Call) and self.new_lines ==-1:
+        if (self.new_lines == -1):
             self.new_lines = 0
         else:
-            self.new_lines = max(self.new_lines, 1 + extra)
+           self.new_lines = max(self.new_lines, 1 + extra)
 
     def body(self, statements):
         self.new_line = True
@@ -130,35 +131,6 @@ class SourceGenerator(NodeVisitor):
         for stmt in statements:
             self.visit(stmt)
         self.indentation -= 1
-        
-    def convert_types(self,input_type):
-        if len(input_type) == 2 and input_type[0] == 'array':
-            #return 'org.apache.avro.generic.GenericData.Array[%s]' % (convert_types(input_type[1]))
-            return 'Array[%s]' %(self.convert_types(input_type[1]))
-        elif len(input_type) == 2 and input_type[0] == 'list':
-            return 'List[%s]' %(self.convert_types(input_type[1]))
-        elif len(input_type) == 3 and input_type[0] == 'tuple':
-            str = '('
-            for x in input_type[1:]:
-                str += self.convert_types(x) +','
-            return str[0:-1] + ')'
-        
-        elif input_type in TYPES:
-            return TYPES[input_type]
-        else:
-            print 'WARNING POTENTIAL SCALA TYPE MISMATCH OF:', input_type
-            return input_type
-        
-    def set_func_types(self,types):
-        source = []
-        for func in types:
-            name = func[0]
-            #convert types somewhere?
-            scala_arg_types, scala_ret_type = [],[]
-            for arg in func[1]:
-                scala_arg_types.append(self.convert_types(arg))
-            scala_ret_type = self.convert_types(func[2])
-            self.types[name] = [scala_arg_types, scala_ret_type]    
         
     def visit_Number(self, node):
         self.write(repr(node.num))
@@ -182,6 +154,23 @@ class SourceGenerator(NodeVisitor):
             self.write(', ')
             self.visit(node.right)
             self.write(')')
+        elif node.op == '*' and (isinstance(node.left, scala_ast.List) or isinstance(node.right, scala_ast.List) ):
+            if isinstance(node.left, scala_ast.List):
+                self.write("scala_lib.copy_n(")
+                self.visit(node.left)
+                self.write(",")
+                self.visit(node.right)
+                self.write(")")
+                """
+                node.left.elements = node.left.elements * node.right.num
+                self.visit(node.left)
+                """
+            else:
+                self.write("scala_lib.copy_n(")
+                self.visit(node.right)
+                self.write(",")
+                self.visit(node.left)
+                self.visit(")")
         else:
             self.write('(')
             self.visit(node.left)
@@ -192,16 +181,16 @@ class SourceGenerator(NodeVisitor):
     def visit_BoolOp(self,node):
         self.newline(node)
         self.write('(')
-        op = BOOLOP_SYMBOLS[type(node.op)]             
+        op = BOOLOP_SYMBOLS[type(node.op)]      
         self.visit(node.values[0])
-        if op == 'and':
-            self.write(' && ')
-        elif op == 'or':
-            self.write(' || ')
-        else:
-            raise Error("Unsupported BoolOp type")
-        
-        self.visit(node.values[1])
+        for i in range(1, len(node.values)): 
+            if op == 'and':
+                self.write(' && ')
+            elif op == 'or':
+                self.write(' || ')
+            else:
+                raise Error("Unsupported BoolOp type")
+            self.visit(node.values[i])
         self.write(')')   
     
     def visit_UnaryOp(self, node):
@@ -216,9 +205,8 @@ class SourceGenerator(NodeVisitor):
     def visit_Subscript(self, node):        
         if node.context == 'load':
             if isinstance(node.index, ast.Slice):
-                self.write('scala_lib.slice(')
                 self.visit(node.value)
-                self.write(', ')
+                self.write('.slice(')
                 self.visit(node.index.lower)
                 self.write(', ')
                 self.visit(node.index.upper)
@@ -237,10 +225,6 @@ class SourceGenerator(NodeVisitor):
             self.write(')')
             #will finish this in assign
         
-    #what about newline stuff?? sort of n    
-    #will need to replace outer 's with "" s ...
-    #to do the above, for SString add a flag that if set the 's are removed
-    
     def visit_Print(self, node):
         self.newline(node)
         if node.dest:
@@ -255,7 +239,8 @@ class SourceGenerator(NodeVisitor):
 
     def visit_List(self,node):
         elements = node.elements
-        self.write('scala.collection.mutable.MutableList(')
+        #self.write('scala.collection.mutable.MutableList(')
+        self.write('Array(')
         size = len(elements)
         for i in range(size):
             elem = elements[i]
@@ -263,34 +248,59 @@ class SourceGenerator(NodeVisitor):
             if i != size-1:
                 self.write(', ')   
         self.write(')')         
-             
+
     def visit_Attribute(self,node):
+        #self.newline(node)
         self.visit(node.value)
         self.write('.' + node.attr)   
-    
-    def evaluate_func(self,node):
+
+    def evaluate_custom_func(self,node):
         if node.func.name == 'range':
-            self.write('Range(0,')
-            self.visit(node.args[0])
-            self.write(')')
+            if len(node.args) == 1:
+                self.write('Range(0,')
+                self.visit(node.args[0])
+                self.write(')')
+            else:
+                self.write('Range(')
+                self.visit(node.args[0])
+                self.write(",")
+                self.visit(node.args[1])
+                self.write(")")
         elif node.func.name == 'len':
             self.visit(node.args[0])
             self.write('.length')
         elif node.func.name == 'int':
-            self.visit(node.args[0])
-            self.write('.asInstanceOf[Int]')
-        elif node.func.name == 'str':
-            self.write("Integer.parseInt(")
+            self.write('scala_lib.convert_to_int(')
             self.visit(node.args[0])
             self.write(')')
+        elif node.func.name == 'str':
+            self.visit(node.args[0])
+            self.write('.toString')
         elif node.func.name == 'float':
             self.visit(node.args[0])
             self.write('.asInstanceOf[Double]')
         elif node.func.name == 'read_avro_file':
             self.write('(new JAvroInter("res.avro", "args.avro")).readModel(')
             self.visit(node.args[0])
-            self.write(')')
+            self.write(')')  
+        elif node.func.name == 'zip':
+            #only supports zipping together two lists 
+            self.write("scala_lib.zip(")
+            self.visit(node.args[0])
+            self.write(",")
+            self.visit(node.args[1])
+            self.write(")")
+        elif node.func.name == "PriorityQueue":
+            #assume priority queue of type double ?
+            #otherwise would need to make of type any and then how would i get element of right type out ?
+            self.write("(new PriorityQueue[Double]().reverse)")
+            #self.write("(new PriorityQueue[Any]().reverse)")
         else:
+            return False
+        return True
+
+    def evaluate_func(self,node):
+        if not self.evaluate_custom_func(node):
             self.visit(node.func)
             self.write('(')
             comma = False
@@ -299,14 +309,39 @@ class SourceGenerator(NodeVisitor):
                 self.visit(a)
                 comma = True
             self.write(')')         
-        
-    def evaluate_attr_func(self,node):
+
+    def evaluate_custom_attr_func(self,node):
         if node.func.attr == 'append':
+            """
             self.visit(node.func.value)            
             self.write(' += (')
             self.visit(node.args[0])
-            self.write(')')
+            self.write(')') 
+            """
+            self.visit(node.func.value)            
+            self.write(' = ')
+            self.visit(node.func.value)
+            self.write('++')
+            self.visit(node.args[0]) 
+
+        elif isinstance(node.func.value,scala_ast.Name) and node.func.value.name == "PriorityQueue" and node.func.attr == 'put':
+            self.visit(node.args[0])
+            self.write(".enqueue(")
+            self.visit(node.args[1])
+            self.write(")")
+        elif isinstance(node.func.value,scala_ast.Name) and node.func.value.name == "PriorityQueue" and node.func.attr == 'get':
+            self.visit(node.args[0])
+            self.write(".dequeue(")
+            self.write(")")       
+        elif node.func.attr == "qsize":
+            self.visit(node.func.value)
+            self.write(".size")
         else:
+            return False
+        return True
+
+    def evaluate_attr_func(self,node):
+        if not self.evaluate_custom_attr_func(node):
             self.visit(node.func)
             self.write('(')
             comma = False
@@ -379,10 +414,10 @@ class SourceGenerator(NodeVisitor):
             if node.lvalue.name == 'TYPE_DECS':
                 self.visit(node.rvalue)
                 return 0
-        except: pass        
+        except: pass      
         self.newline(node)       
         self.stored_vals["lvalue"] = node.lvalue
-        if not isinstance(node.lvalue, Subscript) and not isinstance(node.lvalue, Attribute)\
+        if not isinstance(node.lvalue, scala_ast.Subscript) and not isinstance(node.lvalue, scala_ast.Attribute)\
             and not self.already_def(node.lvalue.name):
             self.write('var ')
             self.store_var(node.lvalue.name)
@@ -405,7 +440,7 @@ class SourceGenerator(NodeVisitor):
         self.write('}')
         
         if node.orelse:
-            if not isinstance(node.orelse[0], IfConv):
+            if not isinstance(node.orelse[0], scala_ast.IfConv):
                 self.newline(node)
                 self.write('else { ')
                 self.body(node.orelse)
@@ -425,6 +460,19 @@ class SourceGenerator(NodeVisitor):
         self.newline(node)
         self.write('}')
     
+    def visit_ListComp(self,node):
+        self.visit(node.comprehension)
+        self.visit(node.elt)
+        self.write( " )")
+
+    def visit_Comprehension(self,node):
+        #does not support multiple target
+        self.newline(node)
+        self.visit(node.iter)
+        self.write(".map( ")
+        self.visit(node.target)
+        self.write(" => ")
+
     def visit_While(self, node):
         self.newline(node)
         self.write('while (')
@@ -436,7 +484,35 @@ class SourceGenerator(NodeVisitor):
         self.newline(node)
         self.write('}')
     
-    
+    def convert_types(self,input_type):
+        if len(input_type) == 2 and input_type[0] == 'array':
+            #return 'org.apache.avro.generic.GenericData.Array[%s]' % (convert_types(input_type[1]))
+            return 'Array[%s]' %(self.convert_types(input_type[1]))
+        elif len(input_type) == 2 and input_type[0] == 'list':
+            return 'List[%s]' %(self.convert_types(input_type[1]))
+        elif len(input_type) == 3 and input_type[0] == 'tuple':
+            str = '('
+            for x in input_type[1:]:
+                str += self.convert_types(x) +','
+            return str[0:-1] + ')'
+        
+        elif input_type in TYPES:
+            return TYPES[input_type]
+        else:
+            print 'WARNING POTENTIAL SCALA TYPE MISMATCH OF:', input_type
+            return input_type
+        
+    def set_func_types(self,types):
+        source = []
+        for func in types:
+            name = func[0]
+            #convert types somewhere?
+            scala_arg_types, scala_ret_type = [],[]
+            for arg in func[1]:
+                scala_arg_types.append(self.convert_types(arg))
+            scala_ret_type = self.convert_types(func[2])
+            self.types[name] = [scala_arg_types, scala_ret_type] 
+
     
     
     

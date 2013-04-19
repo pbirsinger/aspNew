@@ -1,5 +1,5 @@
 #!/bin/bash
 
 cd $1
-jar -cf source.jar *
+jar -cf source.jar * /root/asp/asp/avro_inter/*.class
 

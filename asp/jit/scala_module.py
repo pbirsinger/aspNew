@@ -33,7 +33,7 @@ class ScalaFunction:
             print "return code is:" , out.returncode
             raise Exception("Bad return code")
 
-        results = read_avro_file('results.avro')[0]        
+        results = read_avro_file('results.avro').next().values()[0]     
         os.remove('args.avro')
         os.remove('results.avro')
         return results
@@ -100,7 +100,7 @@ class ScalaModule:
             source = open(filepath, 'w')
             source.write(source_string)
             source.close()            
-            result = os.system("scalac -d %s %s" % (mod_cache_dir, filepath))                
+            result = os.system("scalac -optimise -d %s %s" % (mod_cache_dir, filepath))                
             os.remove(filepath)
             if result != 0:
                 os.system("rm -rf " +  mod_cache_dir)

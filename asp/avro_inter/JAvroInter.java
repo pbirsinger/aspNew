@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.lang.reflect.Array;
 
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
@@ -62,7 +63,10 @@ public class JAvroInter{
 		**/
 		if (item instanceof List){
 			return String.format("{ \"type\":\"array\", \"items\": %s}", getAvroType(((List)item).get(0)));
-		}		 
+		}	
+		else if (c.isArray()){
+			return String.format("{ \"type\":\"array\", \"items\": %s}", getAvroType(Array.get(item, 0)));
+		}	 
 		else if (name == "java.lang.Double" || name == "double"){
 			return "\"double\"";
 		}
@@ -81,6 +85,7 @@ public class JAvroInter{
 		else if (name == "java.lang.Boolean" || name == "boolean"){
 			return "\"boolean\"";
 		}
+		// need to check if an array of doubles 
 		else {
 			System.out.println(name);
 			throw new RuntimeException("Unknown Argument Type to Write to Avro File");
@@ -180,6 +185,7 @@ public class JAvroInter{
         String s= this.makeModelSchema(1);
         Schema schema = (new Schema.Parser()).parse(s);
         this.schema = schema;
+
 
          BufferedReader buffer = new BufferedReader(new FileReader(filename));
          String line = null;

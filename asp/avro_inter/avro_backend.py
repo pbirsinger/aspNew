@@ -20,8 +20,6 @@ def generate_scala_object(mainfunc, filename=None, rendered=None):
     output = """
 import javro.JAvroInter
 import org.apache.avro.Schema
-import javro.scala_arr
-import javro.scala_lib 
 
 class %s{
     %s
@@ -95,7 +93,8 @@ def parse_func(rendered, colon_indices, mainfunc):
     #arg types are now between : and ,'s
     return types
 
-#calculates arg amount in function simply by counting the commas...could be improved
+#calculates arg amount in function simply by counting the commas
+#not robust if same function name in comments as mainfunc with different arg amount ..
 def get_arg_amount(rendered, mainfunc):
     start = opening_paren_loc(rendered,rendered.find(mainfunc))
     end = closing_paren_loc(rendered,rendered.find(mainfunc))    

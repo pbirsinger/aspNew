@@ -140,8 +140,18 @@ class SourceGenerator(NodeVisitor):
         self.write(node.text)
         self.write('"')
     
+    def evaluate_special_name(self,node):
+        if node.name == "False":
+            self.write("false")
+        elif node.name == "True":
+            self.write("true")
+        else:
+            return False
+        return True
+
     def visit_Name(self, node):
-        self.write(node.name)
+        if not self.evaluate_special_name(node):
+            self.write(node.name)
 
     def visit_Expression(self, node):
         self.newline(node) #may cause problems in newline()

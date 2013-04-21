@@ -39,6 +39,15 @@ object scala_lib{
         list1.zip(list2).map(tup => (scala.collection.mutable.MutableList[T]()++(tup.productIterator)).asInstanceOf[scala.collection.mutable.MutableList[T]] )
     }
 
+    def zip[T: Manifest] (arr1: Array[T], arr2: Array[T]): Array[Array[T]]= {
+    	arr1.zip(arr2).map( tup => {
+    		var out = new Array[T](2)	
+    		out(0) =tup._1.asInstanceOf[T]
+    		out(1) =tup._2.asInstanceOf[T]
+    		out
+    	})
+    }
+
     def copy_n[T](list: scala.collection.mutable.MutableList[T], copies: Int): scala.collection.mutable.MutableList[T] ={
     	var out = new scala.collection.mutable.MutableList[T]()
     	for (i <- Range(0,copies)){

@@ -24,7 +24,7 @@ import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.generic.GenericDatumWriter
 import org.apache.avro.generic.GenericRecord
 
-class %s{
+object %s{
     %s
 }
     """ %(class_name + "_data", rendered)
@@ -62,7 +62,7 @@ def generate_func_call(rendered, mainfunc):
         args += "arg%s" %i
         if not i== (size-1):
             args+=', '    
-    call += "results(0) = %s(%s).asInstanceOf[Object]" %('(new ' +mainfunc +'_outer_data()).' + mainfunc, args)
+    call += "results(0) = %s(%s).asInstanceOf[Object]" %(mainfunc +'_outer_data.' + mainfunc, args)
     return call
 
 def get_arg_type(rendered, mainfunc):

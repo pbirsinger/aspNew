@@ -122,6 +122,8 @@ class SourceGenerator(NodeVisitor):
     def newline(self, node=None, extra=0):
         if (self.new_lines == -1):
             self.new_lines = 0
+        elif (self.new_lines == -2):
+            self.new_lines =-2
         else:
            self.new_lines = max(self.new_lines, 1 + extra)
 
@@ -401,9 +403,10 @@ class SourceGenerator(NodeVisitor):
     def visit_ReturnStatement(self, node):
         self.newline(node)
         self.write('return ')
-        self.new_lines = -1
+        self.new_lines = -2
         self.visit(node.retval)
         self.new_lines = 0
+        self.new_lines =0
         
     def visit_Compare(self,node):
         self.newline(node,-1)

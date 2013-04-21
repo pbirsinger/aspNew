@@ -18,8 +18,12 @@ def generate_scala_object(mainfunc, filename=None, rendered=None):
         f.close()
     
     output = """
-import javro.JAvroInter
+import JAvroInter
 import org.apache.avro.Schema
+import org.apache.avro.generic.GenericData
+import org.apache.avro.generic.GenericDatumReader
+import org.apache.avro.generic.GenericDatumWriter
+import org.apache.avro.generic.GenericRecord
 
 class %s{
     %s

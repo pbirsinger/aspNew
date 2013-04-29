@@ -468,14 +468,30 @@ class SourceGenerator(NodeVisitor):
   
     def visit_For(self,node):
         self.newline(node)
-        self.write('for (')
-        self.visit(node.target)
-        self.write( ' <- ')
-        self.visit(node.iter)
-        self.write(') {')
-        self.body(node.body)
-        self.newline(node)
-        self.write('}')
+        if isinstance(node.iter, scala_ast.Call):
+            self.newline(node)
+            self.write('for (')
+            self.visit(node.target)
+            self.write( ' <- ')
+            self.visit(node.iter)
+            self.write(') {')
+            self.body(node.body)
+            self.newline(node)
+            self.write('}')
+        else:    
+            self.write( 'for (i <- Range(0, ')
+            self.visit(node.iter)
+            self.write('.size)) {')
+            self.newline(node)
+            self.write('var ')
+            self.visit(node.target)
+            self.write(' = ')
+
+            self.visit(node.iter)
+            self.write('(i)')
+            self.body(node.body)
+            self.newline(node)
+            self.write('}')
 
         # self.newline(node)
         # current_time = str(int(time.time()*100))

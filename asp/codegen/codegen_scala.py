@@ -1,6 +1,7 @@
 from ast import *
 from ast_tools import *
 import scala_ast
+import time
 
 BOOLOP_SYMBOLS = {
     And:        'and',
@@ -335,7 +336,6 @@ class SourceGenerator(NodeVisitor):
             self.visit(node.func.value)
             self.write('++')
             self.visit(node.args[0]) 
-
         elif isinstance(node.func.value,scala_ast.Name) and node.func.value.name == "PriorityQueue" and node.func.attr == 'put':
             self.visit(node.args[0])
             self.write(".enqueue(")
@@ -348,6 +348,10 @@ class SourceGenerator(NodeVisitor):
         elif node.func.attr == "qsize":
             self.visit(node.func.value)
             self.write(".size")
+        elif node.func.attr == "sort":
+            self.write("scala.util.Sorting.quickSort(")
+            self.visit(node.func.value)
+            self.write(")")
         else:
             return False
         return True
@@ -472,6 +476,21 @@ class SourceGenerator(NodeVisitor):
         self.body(node.body)
         self.newline(node)
         self.write('}')
+
+        # self.newline(node)
+        # current_time = str(int(time.time()*100))
+        # self.write('var count' +current_time + ' = 0')
+        # self.visit(new Assign("count"+str(int(time.time()*100)), 
+        # self.newline(node)
+        # self.write('while ( count' +current_time+ " < ")
+        # self.visit(node.iter)
+        # self.write(".size) {")
+        # self.body(node.body)
+        # self.newline(node)
+        # self.write("count"+current_time+ " += 1")
+        # self.newline(node)
+        # self.write('}')
+
     
     def visit_ListComp(self,node):
         self.visit(node.comprehension)

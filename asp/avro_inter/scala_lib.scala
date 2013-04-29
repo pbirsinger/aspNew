@@ -56,14 +56,30 @@ object scala_lib{
     	return out
     }
 
+    def duplicate_arr[T: Manifest](arr:Array[T]): Array[T] ={
+        var out_arr = new Array[T](arr.size)
+        Array.copy(arr, 0, out_arr, 0, arr.size)
+        return out_arr
+    }
+
     def copy_n[T : Manifest](arr: Array[T], copies: Int): Array[T] ={
     	var out = new Array[T](arr.size * copies)
-    	for (i <- Range(0,copies-1)){
+    	for (i <- Range(0,copies)){
     		for (j <- Range(0, arr.size)){
-    			out(i*arr.size+j) = arr(j)
+                out(i*arr.size+j) = arr(j)
     		}
     	}
     	return out
+    }
+
+    def copy_n[T : Manifest](arr: Array[Array[T]], copies: Int): Array[Array[T]] ={
+        var out = new Array[Array[T]](arr.size * copies)
+        for (i <- Range(0,copies)){
+            for (j <- Range(0, arr.size)){
+                out(i*arr.size+j) = duplicate_arr(arr(j))
+            }
+        }
+        return out
     }
 
     def convert_to_int(number:String):Int ={

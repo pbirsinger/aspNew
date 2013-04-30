@@ -89,6 +89,7 @@ class SourceGenerator(NodeVisitor):
         self.types = {}
         self.subl_count = 0
         self.set_func_types(func_types)
+        self.unique_var_count = 0
 
     
     def to_source(self, node):
@@ -466,6 +467,10 @@ class SourceGenerator(NodeVisitor):
             else:
                 self.visit_IfConv(node.orelse[0])
   
+    def generate_unique_var_name(self):
+        self.unique_var_count += 1
+        return 'temp'+str(int(time.time()))+str(self.unique_var_count)
+
     def visit_For(self,node):
         self.newline(node)
         if isinstance(node.iter, scala_ast.Call):
@@ -479,7 +484,8 @@ class SourceGenerator(NodeVisitor):
             self.newline(node)
             self.write('}')
         else:    
-            self.write( 'for (i <- Range(0, ')
+            unique_var = self.generate_unique_var_name()
+            self.write( 'for (' + unique_var + ' <- Range(0, ')
             self.visit(node.iter)
             self.write('.size)) {')
             self.newline(node)
@@ -488,7 +494,7 @@ class SourceGenerator(NodeVisitor):
             self.write(' = ')
 
             self.visit(node.iter)
-            self.write('(i)')
+            self.write('(' + unique_var+ ')')
             self.body(node.body)
             self.newline(node)
             self.write('}')

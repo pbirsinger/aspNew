@@ -1,5 +1,6 @@
 import java.util.ArrayList
 import Math.pow
+import scala.util.Sorting.quickSort
 
 class scala_iter[A](arr: ArrayList[Object])extends Iterator[A]{
 	var stored = arr;
@@ -56,6 +57,7 @@ object scala_lib{
     	return out
     }
 
+    //should make this recursive in case T is also a nested array
     def duplicate_arr[T: Manifest](arr:Array[T]): Array[T] ={
         var out_arr = new Array[T](arr.size)
         Array.copy(arr, 0, out_arr, 0, arr.size)
@@ -82,12 +84,48 @@ object scala_lib{
         return out
     }
 
+    def sort(arr: Array[Double]) {
+        quickSort(arr)
+    }
+
+    def sort(arr: Array[Float]) {
+        quickSort(arr)
+    }
+
+    def sort(arr: Array[Int]) {
+        quickSort(arr)
+    }
+
+    def sort(arr:Array[Array[Double]]){
+        quickSort(arr)(Ordering.by[Array[Double], Double](_.apply(0)))
+    }
+
+    def sort(arr:Array[Array[Float]]){
+        quickSort(arr)(Ordering.by[Array[Float], Float](_.apply(0)))
+    }
+
+    def sort(arr:Array[Array[Int]]){
+        quickSort(arr)(Ordering.by[Array[Int], Int](_.apply(0)))
+    }
+
     def convert_to_int(number:String):Int ={
     	return Integer.parseInt(number)
     }
 
     def convert_to_int(number:Double):Int ={
     	return number.asInstanceOf[Int]
+    }
+
+    def subscript_get[T: Manifest](arr: Array[T], index:Int): T ={
+        return arr(index)
+    }
+
+    def subscript_set[T: Manifest](arr: Array[T], index:Int, item:T) {
+        arr(index) = item
+    }
+
+    def subscript_get(tup: Product, index:Int): Any={
+        return tup.productElement(index)    
     }
 
     def mean(arr: Array[Double]): Double={

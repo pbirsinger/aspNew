@@ -350,7 +350,7 @@ class SourceGenerator(NodeVisitor):
             self.visit(node.func.value)
             self.write(".size")
         elif node.func.attr == "sort":
-            self.write("scala.util.Sorting.quickSort(")
+            self.write("scala_lib.sort(")
             self.visit(node.func.value)
             self.write(")")
         else:

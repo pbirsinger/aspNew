@@ -485,13 +485,12 @@ class SourceGenerator(NodeVisitor):
             self.write('}')
         else:    
             unique_var = self.generate_unique_var_name()
-            self.write("var " + unique_var + " = -1")
+            self.write("var " + unique_var + " = 0")
             self.newline(node)
             self.write( 'while (' + unique_var + ' < ')
             self.visit(node.iter)
             self.write('.size) {')
-            self.newline(node)
-            self.write('var ' + unique_var + ' +=1')
+
             self.newline(node)
             self.write('var ')
             self.visit(node.target)
@@ -500,6 +499,8 @@ class SourceGenerator(NodeVisitor):
             self.visit(node.iter)
             self.write('(' + unique_var+ ')')
             self.body(node.body)
+            self.newline(node)
+            self.write(unique_var + ' +=1')
             self.newline(node)
             self.write('}')
         # else:    

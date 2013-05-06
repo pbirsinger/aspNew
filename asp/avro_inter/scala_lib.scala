@@ -35,6 +35,17 @@ class scala_arr[A](arr: ArrayList[Object]) extends Seq[A]{
 }
 
 object scala_lib{
+
+    def dot(arr1: Array[Double], arr2:Array[Double]):Double= {
+        var out = 0.0
+        var i =0
+        while (i < arr1.length){
+            out += arr1(i) * arr2(i)
+            i+=1
+        }
+        return out
+    }
+
 	def zip[T](list1: scala.collection.mutable.MutableList[T], list2: scala.collection.mutable.MutableList[T]): 
             scala.collection.mutable.MutableList[scala.collection.mutable.MutableList[T]] ={
         list1.zip(list2).map(tup => (scala.collection.mutable.MutableList[T]()++(tup.productIterator)).asInstanceOf[scala.collection.mutable.MutableList[T]] )
@@ -129,7 +140,11 @@ object scala_lib{
     }
 
     def mean(arr: Array[Double]): Double={
-    	return arr.reduce(_+_) / arr.length
+        return arr.reduce(_+_) / arr.length
+    }    
+
+    def mean(arr: Array[Float]): Float={
+        return arr.reduce(_+_) / arr.length
     }
 
     def mean(list: scala.collection.mutable.MutableList[Double]): Double={
@@ -137,10 +152,17 @@ object scala_lib{
     }
 
     def std_dev(arr: Array[Double]): Double ={
-    	var mean = arr.reduce(_+_) / arr.length
-    	var squared_dif = 0.0
-    	arr.foreach{ elem => squared_dif += (mean - elem) * (mean - elem)}
-    	return Math.pow((squared_dif / (arr.length-1)), .5)
+        var mean = arr.reduce(_+_) / arr.length
+        var squared_dif = 0.0
+        arr.foreach{ elem => squared_dif += (mean - elem) * (mean - elem)}
+        return Math.pow((squared_dif / (arr.length-1)), .5)
+    }
+
+    def std_dev(arr: Array[Float]): Float ={
+        var mean = arr.reduce(_+_) / arr.length
+        var squared_dif = 0.0
+        arr.foreach{ elem => squared_dif += (mean - elem) * (mean - elem)}
+        return Math.pow((squared_dif / (arr.length-1)), .5).asInstanceOf[Float]
     }
 
     def std_dev(list: scala.collection.mutable.MutableList[Double]): Double ={
